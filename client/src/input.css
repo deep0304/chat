@@ -1,0 +1,17 @@
+::-webkit-scrollbar {
+    /* Customize the scrollbar width */
+    width:3px;
+}
+
+::-webkit-scrollbar-track {
+    /* Customize the scrollbar track */
+    background:#000000
+}
+
+::-webkit-scrollbar-thumb {
+    /* Customize the scrollbar thumb */
+    background: #202020;
+}
+::-webkit-scrollbar-thumb:hover{
+    background: #202020;
+}

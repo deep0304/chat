@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+::-webkit-scrollbar {
+    /* Customize the scrollbar width */
+    width:5px;
+    height: 70px;
+}
+
+::-webkit-scrollbar-track {
+    /* Customize the scrollbar track */
+    background:#474545
+}
+
+::-webkit-scrollbar-thumb {
+    /* Customize the scrollbar thumb */
+    background: #757b7c;
+}
+::-webkit-scrollbar-thumb:hover{
+    background: #494a4b;
+    
+}
