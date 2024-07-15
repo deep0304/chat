@@ -15,6 +15,9 @@ const userSchema = mongoose.Schema({
     type: String,
     // required: true,
   },
+  token:{
+  type:String
+  },
 });
 const Users = mongoose.model("User", userSchema);
 module.exports = Users;

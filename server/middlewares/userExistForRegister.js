@@ -14,5 +14,4 @@ async function userExistForRegister(req, res, next) {
   }
 }
 
-
 module.exports = userExistForRegister;
