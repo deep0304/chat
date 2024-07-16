@@ -17,6 +17,7 @@ require("./db/connection.js");
 const Users = require("./models/User.js");
 const Messages = require("./models/Messages.js");
 const Conversations = require("./models/conversations.js");
+const getUserData = require("./functions/getuserData.js");
 
 //app defining
 const app = express();
@@ -163,43 +164,103 @@ app.post("/api/create/conversations", async (req, res) => {
   }
 });
 
-app.get("/api/get/conversations/:userid", async (req, res) => {
-  const params = req.params;
-  const userId = params.userid;
-  console.log(userId);
-  const conversations = await Conversations.find({
-    members: userId,
-  });
-  res.json({
-    message: "something herer ",
-  });
-});
-app.post("/api/messages/:senderId", async (req, res) => {
-  const senderId = req.params.senderId;
-  const conversations = await Conversations.find({
-    members: { $in: [senderId] },
-  });
-  console.log(conversations);
-  console.log("----------------------");
-  conversations.map(async (conver) => {
-    console.log(conver.members);
-    const senderUser = await Users.findById({ _id: conver.members[0] });
-    const recieverUser = await Users.findById({ _id: conver.members[1] });
-    if (recieverUser._id == senderId && senderUser._id == senderId) {
-      console.log("it is you, yourself");
+app.get("/api/get/conversations/:userId", async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    const conversations = await Conversations.find({
+      members: { $in: [userId] },
+    });
+    if (!conversations) {
+      res.status(400).json({
+        message: "something went wromng while finding conversations",
+      });
     } else {
-      console.log({
-        conver: conver._id,
-        senderUsername: senderUser.username,
-        recieverUsername: recieverUser.username,
+      console.log("conversations");
+      console.log("----------------------");
+      conversations.map(async (conver) => {
+        console.log(conver.members);
+        const senderUser = await Users.findById({ _id: conver.members[0] });
+        const recieverUser = await Users.findById({ _id: conver.members[1] });
+        if (recieverUser._id == senderId && senderUser._id == senderId) {
+          console.log({
+            conver: conver._id,
+            senderUsername: senderUser.username + "(yourself)",
+          });
+        } else {
+          console.log({
+            conver: conver._id,
+            senderUsername: senderUser.username,
+            recieverUsername: recieverUser.username,
+          });
+        }
+      });
+      res.json({
+        message: "conversations logged successfully",
       });
     }
-  });
-  //   console.log(conversations);
-  res.json({
-    message: "you are tryng ",
-  });
+  } catch (error) {
+    console.log(error);
+  }
 });
+app.post("/api/messages", async (req, res) => {
+  //   const senderId = req.params.senderId;
+  const { ConversationId, senderId, message } = req.body;
+  try {
+    const newMessage = await Messages.create({
+      ConversationId,
+      senderId,
+      message,
+    });
+    if (newMessage) {
+      res.status(200).json({
+        info: "message saved successFully",
+      });
+    } else {
+      res.status(400).json({
+        message: "something went wrong",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+  //   console.log(conversations);
+});
+app.get("/api/messages", async (req, res) => {
+  const { ConversationId, senderId } = req.body;
+  try {
+    const conversation = await Conversations.findById(ConversationId);
+    console.log(conversation);
+    const usersArray = await getUserData({
+      senderId,
+      conversation,
+    });
+    const senderUser = usersArray[0];
+    const recieverUser = usersArray[1];
+    const messages = await Messages.find({
+      ConversationId,
+    });
+    if (!messages || !conversation) {
+      res.status(400).json("Message or conversations not found");
+    }
+    messages.map((messageWithIds) => {
+      if (senderId === messageWithIds.senderId) {
+        console.log("Username: ", senderUser.username);
+        console.log("Message: ", messageWithIds.message);
+        console.log("sent");
+      } else {
+        console.log("Username: ", recieverUser.username);
+        console.log("Message: ", messageWithIds.message);
+        console.log("recieved");
+      }
+    });
+    res.status(200).json({
+      message: "all messages logged",
+    });
+  } catch (error) {
+    console.log(error);
+  }
+});
+//bnana h kya :- suggestion field
 app.listen(port, () => {
   console.log("the port is running at port " + port);
 });
