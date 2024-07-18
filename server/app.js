@@ -2,6 +2,7 @@
 //imports of express and dotenv\
 const express = require("express");
 require("dotenv").config();
+const cors = require("cors");
 
 //encyrption imports
 const bcrypt = require("bcryptjs");
@@ -18,11 +19,13 @@ const Users = require("./models/User.js");
 const Messages = require("./models/Messages.js");
 const Conversations = require("./models/conversations.js");
 const getUserData = require("./functions/getuserData.js");
+const sendNewMessage = require("./functions/sendNewMessage.js");
 
 //app defining
 const app = express();
 const port = 3001;
 app.use(express.json());
+app.use(cors());
 app.get("/", (req, res) => {
   return res.json({
     message: "hi   what is this message i want to share to you",
@@ -71,7 +74,7 @@ app.post("/api/register", userExistForRegister, async (req, res) => {
     },
   });
 });
-app.get("/app/login", userExistForLogin, async (req, res, isExist) => {
+app.post("/api/login", userExistForLogin, async (req, res, isExist) => {
   const { username, password } = req.body;
   const userFromDb = await Users.findOne({ username: username });
   //taking password form the database
@@ -112,8 +115,11 @@ app.get("/app/login", userExistForLogin, async (req, res, isExist) => {
     }
 
     res.status(200).json({
-      userId: userFromDb._id,
-      username: userFromDb.username,
+      user: {
+        username: userFromDb.username,
+        email: userFromDb.email,
+        id: userFromDb._id,
+      },
       token: tokenJWT,
     });
   }
@@ -165,7 +171,8 @@ app.post("/api/create/conversations", async (req, res) => {
 });
 
 app.get("/api/get/conversations/:userId", async (req, res) => {
-  const userId = req.params.userId;
+  const { userId } = req.params;
+  let recieverUser = "";
   try {
     const conversations = await Conversations.find({
       members: { $in: [userId] },
@@ -175,45 +182,67 @@ app.get("/api/get/conversations/:userId", async (req, res) => {
         message: "something went wromng while finding conversations",
       });
     } else {
-      console.log("conversations");
-      console.log("----------------------");
-      conversations.map(async (conver) => {
-        console.log(conver.members);
-        const senderUser = await Users.findById({ _id: conver.members[0] });
-        const recieverUser = await Users.findById({ _id: conver.members[1] });
-        if (recieverUser._id == senderId && senderUser._id == senderId) {
-          console.log({
-            conver: conver._id,
-            senderUsername: senderUser.username + "(yourself)",
-          });
-        } else {
-          console.log({
-            conver: conver._id,
-            senderUsername: senderUser.username,
-            recieverUsername: recieverUser.username,
-          });
-        }
-      });
-      res.json({
-        message: "conversations logged successfully",
-      });
+      const conversationDeatials = await Promise.all(
+        conversations.map(async (conver) => {
+          console.log(conver.members);
+          const senderUser = await Users.findById({ _id: conver.members[0] });
+          recieverUser = await Users.findById({ _id: conver.members[1] });
+          return {
+            conversationId: conver._id,
+            email: recieverUser.email,
+            username: recieverUser.username,
+          };
+        })
+      );
+      return res.json(conversationDeatials);
     }
   } catch (error) {
     console.log(error);
+    return res.status(500).json({
+      message: "errror in server fetching details",
+    });
   }
 });
 app.post("/api/messages", async (req, res) => {
   //   const senderId = req.params.senderId;
-  const { ConversationId, senderId, message } = req.body;
+  const { ConversationId, senderId, message, recieverId } = req.body;
+
+  if (!senderId || !message) {
+    return res.status(400).json({
+      message: "please fill sender and message field",
+    });
+  }
   try {
-    const newMessage = await Messages.create({
-      ConversationId,
+    let conversationId = ConversationId;
+
+    if (!conversationId || conversationId == "") {
+      const existingConversation = await Conversations.findOne({
+        members: { $all: [senderId, recieverId] },
+      });
+      console.log("existing Conversation: ", existingConversation);
+      if (existingConversation) {
+        conversationId = existingConversation._id;
+      } else {
+        const newConversation = await Conversations.create({
+          members: [senderId, recieverId],
+        });
+        conversationId = newConversation._id;
+        conversationId = conversationId;
+      }
+    }
+    console.log("Conversation id : ", conversationId.toString());
+    const newMessage = await sendNewMessage({
+      conversationId,
       senderId,
       message,
+      Messages,
     });
+
+    console.log("newMesage", newMessage);
     if (newMessage) {
       res.status(200).json({
         info: "message saved successFully",
+        message: newMessage,
       });
     } else {
       res.status(400).json({
@@ -261,6 +290,21 @@ app.get("/api/messages", async (req, res) => {
   }
 });
 //bnana h kya :- suggestion field
+app.get("/api/suggestions", async (req, res) => {
+  try {
+    const allUsers = await Users.find({});
+
+    allUsers.map((user) => {
+      console.log({
+        username: user.username,
+        userId: user._id.toString(),
+      });
+    });
+    res.status(200).json("All suggestions listed");
+  } catch (error) {
+    console.log(error);
+  }
+});
 app.listen(port, () => {
   console.log("the port is running at port " + port);
 });

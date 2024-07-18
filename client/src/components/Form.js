@@ -1,21 +1,49 @@
 "use client";
 import Input from "@/components/input";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+
 const Form = ({ signUp = true }) => {
+  const router = useRouter();
   const [data, setData] = useState({
     ...(!signUp && { email: "" }),
     username: "",
     password: "",
   });
   console.log(data);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const res = await fetch(
+      `http://localhost:3001/api/${signUp ? "register" : "login"}`,
+
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    const resData = await res.json();
+    console.log("res data :", resData);
+    if (res.status === 400) {
+      alert("Invalid creadentials");
+    } else {
+      if (resData && resData.token) {
+        localStorage.setItem("user:token", resData.token);
+        localStorage.setItem("user:details", JSON.stringify(resData.user));
+        router.push("/dashboard");
+      }
+    }
+  };
 
   return (
     <div className="justify-center  items-center flex h-screen">
       <div className="flex justify-center flex-col w-[350px] h-[500px] border rounded-sm shadow-lg">
         <form
-          onSubmit={() => {
-            console.log("Submitted");
+          onSubmit={(e) => {
+            handleSubmit(e);
           }}
         >
           <div className="flex-col  text-center">
