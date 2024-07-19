@@ -6,59 +6,8 @@ import SentMessage from "@/components/SentMessage";
 import Input from "../../components/input";
 import { useEffect, useState } from "react";
 const page = () => {
-  const contacts = [
-    {
-      name: "ghost",
-      status: "Active",
-      image: Avatar,
-    },
-    {
-      name: "ghost",
-      status: "Active",
-      image: Avatar,
-    },
-    {
-      name: "ghost",
-      status: "Active",
-      image: Avatar,
-    },
-    {
-      name: "ghost",
-      status: "Active",
-      image: Avatar,
-    },
-    {
-      name: "ghost",
-      status: "Active",
-      image: Avatar,
-    },
-    {
-      name: "ghost",
-      status: "Active",
-      image: Avatar,
-    },
-    {
-      name: "ghost",
-      status: "Active",
-      image: Avatar,
-    },
-    {
-      name: "ghost",
-      status: "Active",
-      image: Avatar,
-    },
-    {
-      name: "ghost",
-      status: "Active",
-      image: Avatar,
-    },
-    {
-      name: "ghost",
-      status: "Active",
-      image: Avatar,
-    },
-  ];
   const [user, setUser] = useState(null || "");
+  const [recieverUserData, setRecieverUserData] = useState("");
   useEffect(() => {
     const userDetails = JSON.parse(localStorage.getItem("user:details"));
     setUser(userDetails);
@@ -102,6 +51,44 @@ const page = () => {
 
     fetchMyApi();
   }, [userId]); // Include loggedUserId in the dependency array
+  const [chats, setChats] = useState({});
+  const loadChat = async (conversationId) => {
+    const sender = localStorage.getItem("user:details");
+    if (!sender) {
+      return;
+    }
+    const senderData = JSON.parse(sender);
+    const senderId = senderData.id;
+
+    const fetchChats = async () => {
+      try {
+        console.log(
+          "conversationId and sednerr: ",
+          conversationId + " " + senderId
+        );
+        const requiredChats = await fetch(
+          "http://localhost:3001/api/messages",
+          {
+            method: "POST",
+            body: JSON.stringify({ ConversationId: conversationId, senderId }),
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+        /**
+         *here taking the data in form of messages and the reciever user
+         * requiredChats : {allMessage,recieveruser}
+         */
+        const responsedData = await requiredChats.json();
+        setChats(responsedData.allMessages);
+        console.log(responsedData.allMessages);
+        setRecieverUserData(responsedData.recieverUser);
+      } catch (error) {
+        console.log("error of the loadchat function: ", error);
+      }
+    };
+    fetchChats();
+  };
 
   return (
     <>
@@ -130,28 +117,40 @@ const page = () => {
             </div>
           </div>
           <div className="justify-items-center z-20 h-[80%] overflow-y-auto">
-            {conversations.map(({ conversationId, email, username }) => {
-              return (
-                <>
-                  <div className=" w-4/5 flex my-2 mx-2 pl-7 items-center cursor-pointer">
-                    <Image
-                      alt="conatctImage"
-                      src={Avatar}
-                      height={50}
-                      width={50}
-                      className="rounded-full mr-2"
-                    />
-                    <div className="flex px-1 flex-col">
-                      <div className="text-lg">{username}</div>
-                      <div className="text-sm indent-2 text-grey/30 ">
-                        {email}
+            {conversations.length > 0 ? (
+              conversations.map(({ conversationId, email, username }) => {
+                return (
+                  <>
+                    <div
+                      className=" w-4/5 flex my-2 mx-2 pl-7 items-center cursor-pointer"
+                      key={conversationId}
+                    >
+                      <Image
+                        alt="conatctImage"
+                        src={Avatar}
+                        height={50}
+                        width={50}
+                        className="rounded-full mr-2"
+                      />
+                      <div
+                        className="flex px-1 flex-col"
+                        onClick={() => {
+                          loadChat(conversationId);
+                        }}
+                      >
+                        <div className="text-lg">{username}</div>
+                        <div className="text-sm indent-2 text-grey/30 ">
+                          {email}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <hr />
-                </>
-              );
-            })}
+                    <hr />
+                  </>
+                );
+              })
+            ) : (
+              <div> No conversations yet</div>
+            )}
           </div>
         </div>
         <div className="w-[60%] h-screen border bg-[#f8f6f6] lg:w-[50%] ">
@@ -184,7 +183,11 @@ const page = () => {
                     className="rounded-full  ml-2 cursor-pointer"
                   />
                   <div className="flex items-center mr-auto ">
-                    <div className="ml-4 text-semibold">Johan</div>
+                    <div className="ml-4 text-semibold">
+                      {recieverUserData
+                        ? recieverUserData.username
+                        : "Chat With Friends"}
+                    </div>
                     <div className="text-xs indent-3 text-sky-700 mr-auto">
                       Online
                     </div>
@@ -230,135 +233,31 @@ const page = () => {
             </div>
           </div>
           <div className="bg-yellow-200 h-[70%]  overflow-y-auto">
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <SentMessage message={"HI johan"} className={"text-red-500"} />
-            <SentMessage message={"HI johan"} className={"text-red-500"} />
-            <SentMessage message={"HI johan"} className={"text-red-500"} />
-            <SentMessage
-              message={
-                "HI johan what are you doing in this nastry world hope your doing welll "
-              }
-              className={"text-red-500"}
-            />
-            <RecievedMessage
-              message={
-                "HI johan what are you doing in this nastry world hope your doing welll "
-              }
-              className={"text-red-500"}
-            />
-            <RecievedMessage message={"HI johan"} className={"text-red-500"} />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <RecievedMessage
-              message={"Hi ghosty"}
-              className={"text-cyan-200"}
-            />
-            <SentMessage message={"HI johan"} className={"text-red-500"} />
+            {chats.length > 0 ? (
+              chats.map((chat, index) => (
+                <div key={index}>
+                  {chat.idType === "sender" ? (
+                    <div>
+                      <div>{chat.username}</div>
+                      <SentMessage
+                        message={chat.message}
+                        className={"text-cyan-200"}
+                      />
+                    </div>
+                  ) : chat.idType === "reciever" ? (
+                    <div>
+                      <div>{chat.username}</div>
+                      <RecievedMessage
+                        message={chat.message}
+                        className={"text-red-200"}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              ))
+            ) : (
+              <div>Chat not started yet , start chatting </div>
+            )}
           </div>
           <div className="h-[10%] flex justify-center items-center bg-orange-200 ">
             <div className="flex  ml-6 justify-start items-center h-[100%] w-full mt-2">

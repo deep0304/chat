@@ -203,7 +203,7 @@ app.get("/api/get/conversations/:userId", async (req, res) => {
     });
   }
 });
-app.post("/api/messages", async (req, res) => {
+app.post("/api/message", async (req, res) => {
   //   const senderId = req.params.senderId;
   const { ConversationId, senderId, message, recieverId } = req.body;
 
@@ -254,15 +254,25 @@ app.post("/api/messages", async (req, res) => {
   }
   //   console.log(conversations);
 });
-app.get("/api/messages", async (req, res) => {
+app.post("/api/messages", async (req, res) => {
   const { ConversationId, senderId } = req.body;
+  if (!ConversationId || !senderId) {
+    return res
+      .status(400)
+      .json({ message: "ConversationId and senderId are required." });
+  }
   try {
     const conversation = await Conversations.findById(ConversationId);
-    console.log(conversation);
+    if (!conversation) {
+      return res.status(400).json({ message: "conversation not found" });
+    }
     const usersArray = await getUserData({
       senderId,
       conversation,
     });
+    if (usersArray.length < 2) {
+      return res.status(400).json({ message: "users not found" });
+    }
     const senderUser = usersArray[0];
     const recieverUser = usersArray[1];
     const messages = await Messages.find({
@@ -271,22 +281,32 @@ app.get("/api/messages", async (req, res) => {
     if (!messages || !conversation) {
       res.status(400).json("Message or conversations not found");
     }
-    messages.map((messageWithIds) => {
-      if (senderId === messageWithIds.senderId) {
-        console.log("Username: ", senderUser.username);
-        console.log("Message: ", messageWithIds.message);
-        console.log("sent");
-      } else {
-        console.log("Username: ", recieverUser.username);
-        console.log("Message: ", messageWithIds.message);
-        console.log("recieved");
-      }
-    });
-    res.status(200).json({
-      message: "all messages logged",
+    const allMessages = await Promise.all(
+      messages.map((messageWithIds) => {
+        if (senderId === messageWithIds.senderId) {
+          return {
+            idType: "sender",
+            senderId: senderId,
+            username: senderUser.username,
+            message: messageWithIds.message,
+          };
+        } else {
+          return {
+            idType: "reciever",
+            recieverId: recieverUser.id,
+            username: recieverUser.username,
+            message: messageWithIds.message,
+          };
+        }
+      })
+    );
+    return res.status(200).json({
+      allMessages,
+      recieverUser: { id: recieverUser.id, username: recieverUser.username },
     });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: "Internal server error." });
   }
 });
 //bnana h kya :- suggestion field
