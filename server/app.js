@@ -128,9 +128,9 @@ app.post("/api/create/conversations", async (req, res) => {
   const { senderId, recieverId } = req.body;
   console.log(req.body);
   try {
-    if (senderId == recieverId) {
+    if (senderId === recieverId) {
       const existTheMainUser = await Conversations.findOne({
-        members: [senderId, recieverId],
+        members: { $all: [senderId, recieverId] },
       });
       if (existTheMainUser) {
         res.status(400).send(" you are already created chat with yourself");
@@ -138,8 +138,9 @@ app.post("/api/create/conversations", async (req, res) => {
         const newMainConversation = await Conversations.create({
           members: [senderId, recieverId],
         });
-        res.status(200).json({
+        return res.status(200).json({
           message: "created self chat",
+          conversation: newMainConversation,
         });
       }
     } else {
@@ -148,15 +149,16 @@ app.post("/api/create/conversations", async (req, res) => {
       });
 
       if (existingConversation) {
-        res.status(400).send("conversation exist already");
+        return res.status(400).send("conversation exist already");
       } else {
         try {
           const newConversation = await Conversations.create({
             members: [senderId, recieverId],
           });
-          console.log("coneversatuons: " + newConversation);
-          res.status(200).json({
+          console.log("coneversations: " + newConversation);
+          return res.status(200).json({
             message: "conversation created successfully",
+            conversation: newConversation,
           });
         } catch (error) {
           console.log(error);
@@ -172,7 +174,6 @@ app.post("/api/create/conversations", async (req, res) => {
 
 app.get("/api/get/conversations/:userId", async (req, res) => {
   const { userId } = req.params;
-  let recieverUser = "";
   try {
     const conversations = await Conversations.find({
       members: { $in: [userId] },
@@ -186,11 +187,13 @@ app.get("/api/get/conversations/:userId", async (req, res) => {
         conversations.map(async (conver) => {
           console.log(conver.members);
           const senderUser = await Users.findById({ _id: conver.members[0] });
-          recieverUser = await Users.findById({ _id: conver.members[1] });
+          const recieverUser = await Users.findById({ _id: conver.members[1] });
+          const otherUser =
+            userId === senderUser._id.toString() ? recieverUser : senderUser;
           return {
             conversationId: conver._id,
-            email: recieverUser.email,
-            username: recieverUser.username,
+            email: otherUser.email,
+            username: otherUser.username,
           };
         })
       );
@@ -203,7 +206,7 @@ app.get("/api/get/conversations/:userId", async (req, res) => {
     });
   }
 });
-app.post("/api/message", async (req, res) => {
+app.post("/api/sendMessage", async (req, res) => {
   //   const senderId = req.params.senderId;
   const { ConversationId, senderId, message, recieverId } = req.body;
 
@@ -240,17 +243,18 @@ app.post("/api/message", async (req, res) => {
 
     console.log("newMesage", newMessage);
     if (newMessage) {
-      res.status(200).json({
+      return res.status(200).json({
         info: "message saved successFully",
         message: newMessage,
       });
     } else {
-      res.status(400).json({
+      return res.status(400).json({
         message: "something went wrong",
       });
     }
   } catch (error) {
     console.log(error);
+    return res.status(400).json("couldnt send the message");
   }
   //   console.log(conversations);
 });
@@ -270,6 +274,13 @@ app.post("/api/messages", async (req, res) => {
       senderId,
       conversation,
     });
+    const recieverUserForFrontendId =
+      senderId === conversation.members[0]
+        ? conversation.members[1]
+        : conversation.members[0];
+    const recieverUserForFrontend = await Users.findById(
+      recieverUserForFrontendId
+    );
     if (usersArray.length < 2) {
       return res.status(400).json({ message: "users not found" });
     }
@@ -302,7 +313,10 @@ app.post("/api/messages", async (req, res) => {
     );
     return res.status(200).json({
       allMessages,
-      recieverUser: { id: recieverUser.id, username: recieverUser.username },
+      recieverUserForFrontend: {
+        id: recieverUserForFrontendId,
+        username: recieverUserForFrontend.username,
+      },
     });
   } catch (error) {
     console.log(error);

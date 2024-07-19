@@ -8,14 +8,16 @@ import { useEffect, useState } from "react";
 const page = () => {
   const [user, setUser] = useState(null || "");
   const [recieverUserData, setRecieverUserData] = useState("");
-  useEffect(() => {
-    const userDetails = JSON.parse(localStorage.getItem("user:details"));
-    setUser(userDetails);
-  }, []);
+  const [message, setMessage] = useState("");
   const username = user.username;
   const userEmail = user.email;
   const userId = user.id;
   const [conversations, setConversations] = useState([]);
+  useEffect(() => {
+    const userDetails = JSON.parse(localStorage.getItem("user:details"));
+    setUser(userDetails);
+  }, []);
+
   useEffect(() => {
     const loggedUserDetails = localStorage.getItem("user:details");
     if (!loggedUserDetails) {
@@ -82,12 +84,47 @@ const page = () => {
         const responsedData = await requiredChats.json();
         setChats(responsedData.allMessages);
         console.log(responsedData.allMessages);
-        setRecieverUserData(responsedData.recieverUser);
+        setRecieverUserData(responsedData.recieverUserForFrontend);
       } catch (error) {
         console.log("error of the loadchat function: ", error);
       }
     };
     fetchChats();
+  };
+  const handleMessage = async () => {
+    try {
+      console.log(user.id);
+      console.log(recieverUserData.id);
+      console.log(message);
+      const response = await fetch("http://localhost:3001/api/sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderId: user.id,
+          recieverId: recieverUserData.id,
+          message: message,
+        }),
+      });
+      console.log();
+      console.log(response);
+      const responseData = await response.json();
+      console.log(responseData.message);
+      const messageResponse = responseData.message;
+      setChats((prevChats) => [
+        ...prevChats,
+        {
+          idType: "sender",
+          senderId: user.id,
+          username: user.username,
+          message: messageResponse.message,
+        },
+      ]);
+
+      // const responseData = await response.json();
+      // console.log(responseData);
+    } catch (error) {
+      console.log("Error while sending the chat", error);
+    }
   };
 
   return (
@@ -238,7 +275,7 @@ const page = () => {
                 <div key={index}>
                   {chat.idType === "sender" ? (
                     <div>
-                      <div>{chat.username}</div>
+                      {/* <div>{chat.username}</div> */}
                       <SentMessage
                         message={chat.message}
                         className={"text-cyan-200"}
@@ -246,7 +283,7 @@ const page = () => {
                     </div>
                   ) : chat.idType === "reciever" ? (
                     <div>
-                      <div>{chat.username}</div>
+                      {/* <div>{chat.username}</div> */}
                       <RecievedMessage
                         message={chat.message}
                         className={"text-red-200"}
@@ -259,36 +296,12 @@ const page = () => {
               <div>Chat not started yet , start chatting </div>
             )}
           </div>
-          <div className="h-[10%] flex justify-center items-center bg-orange-200 ">
-            <div className="flex  ml-6 justify-start items-center h-[100%] w-full mt-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className=" cursor-pointer mr-3 icon icon-tabler icon-tabler-photo-plus"
-                width="30"
-                height="30"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="#9e9e9e"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M15 8h.01" />
-                <path d="M12.5 21h-6.5a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v6.5" />
-                <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l4 4" />
-                <path d="M14 14l1 -1c.67 -.644 1.45 -.824 2.182 -.54" />
-                <path d="M16 19h6" />
-                <path d="M19 16v6" />
-              </svg>
-              <input
-                placeholder="Type message"
-                className=" outline-none focus:ring-0 focus:border-0 h-[80%] w-[70%]  text-md border rounded-full text-center border-[#535a5355]"
-              />
-              <div className=" ml-4 flex justify-around">
+          {recieverUserData ? (
+            <div className="h-[10%] flex justify-center items-center bg-orange-200 ">
+              <div className="flex  ml-6 justify-start items-center h-[100%] w-full mt-2">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="cursor-pointer ml-3 mr-5 icon icon-tabler icon-tabler-mood-wink-2"
+                  className=" cursor-pointer mr-3 icon icon-tabler icon-tabler-photo-plus"
                   width="30"
                   height="30"
                   viewBox="0 0 24 24"
@@ -299,33 +312,70 @@ const page = () => {
                   strokeLinejoin="round"
                 >
                   <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                  <path d="M12 21a9 9 0 1 1 0 -18a9 9 0 0 1 0 18z" />
-                  <path d="M9 10h-.01" />
-                  <path d="M14.5 15a3.5 3.5 0 0 1 -5 0" />
-                  <path d="M15.5 8.5l-1.5 1.5l1.5 1.5" />
+                  <path d="M15 8h.01" />
+                  <path d="M12.5 21h-6.5a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v6.5" />
+                  <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l4 4" />
+                  <path d="M14 14l1 -1c.67 -.644 1.45 -.824 2.182 -.54" />
+                  <path d="M16 19h6" />
+                  <path d="M19 16v6" />
                 </svg>
+                <input
+                  placeholder="Type message"
+                  className=" outline-none focus:ring-0 focus:border-0 h-[80%] w-[70%]  text-md border rounded-full text-center border-[#535a5355]"
+                  onChange={(e) => {
+                    setMessage(e.target.value);
+                  }}
+                />
+                <div className=" ml-4 flex justify-around">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="cursor-pointer ml-3 mr-5 icon icon-tabler icon-tabler-mood-wink-2"
+                    width="30"
+                    height="30"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="#9e9e9e"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M12 21a9 9 0 1 1 0 -18a9 9 0 0 1 0 18z" />
+                    <path d="M9 10h-.01" />
+                    <path d="M14.5 15a3.5 3.5 0 0 1 -5 0" />
+                    <path d="M15.5 8.5l-1.5 1.5l1.5 1.5" />
+                  </svg>
 
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className=" cursor-pointer ml-3 icon icon-tabler icon-tabler-send-2"
-                  width="36"
-                  height="36"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="#9e9e9e"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                  <path d="M4.698 4.034l16.302 7.966l-16.302 7.966a.503 .503 0 0 1 -.546 -.124a.555 .555 0 0 1 -.12 -.568l2.468 -7.274l-2.468 -7.274a.555 .555 0 0 1 .12 -.568a.503 .503 0 0 1 .546 -.124z" />
-                  <path d="M6.5 12h14.5" />
-                </svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className=" cursor-pointer ml-3 icon icon-tabler icon-tabler-send-2"
+                    width="36"
+                    height="36"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="#9e9e9e"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    onClick={handleMessage}
+                  >
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M4.698 4.034l16.302 7.966l-16.302 7.966a.503 .503 0 0 1 -.546 -.124a.555 .555 0 0 1 -.12 -.568l2.468 -7.274l-2.468 -7.274a.555 .555 0 0 1 .12 -.568a.503 .503 0 0 1 .546 -.124z" />
+                    <path d="M6.5 12h14.5" />
+                  </svg>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex text-center text-lg  justify-content align-center">
+              {" "}
+              Start new Conversations with friends in Suggestions{" "}
+            </div>
+          )}
         </div>
-        <div className="w-[0%] h-screen bg-[#FAEDC7] lg:w-[25%] "></div>
+        <div className="w-[0%] h-screen bg-[#FAEDC7] lg:w-[25%] ">
+          
+        </div>
       </div>
     </>
   );
