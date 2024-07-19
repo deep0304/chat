@@ -328,13 +328,15 @@ app.get("/api/suggestions", async (req, res) => {
   try {
     const allUsers = await Users.find({});
 
-    allUsers.map((user) => {
-      console.log({
-        username: user.username,
-        userId: user._id.toString(),
-      });
-    });
-    res.status(200).json("All suggestions listed");
+    const allUsersData = await Promise.all(
+      allUsers.map((user) => {
+        return {
+          username: user.username,
+          userId: user._id.toString(),
+        };
+      })
+    );
+    return res.status(200).json(allUsersData);
   } catch (error) {
     console.log(error);
   }

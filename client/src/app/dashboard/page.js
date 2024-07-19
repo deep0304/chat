@@ -126,6 +126,30 @@ const page = () => {
       console.log("Error while sending the chat", error);
     }
   };
+  //---------------------------------------------------------------------------------------------------------------------------------------------
+  //create handle Suggestion here
+  //-------------------------------------------------------------------------------------------------------------
+  const [suggestions, setSuggestions] = useState([]);
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/api/suggestions", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        console.log(response);
+        const responseData = await response.json();
+        console.log(responseData);
+        setSuggestions(responseData);
+      } catch (error) {
+        console.log("error   while fetching the suggestions  ", error);
+      }
+    };
+    fetchSuggestions();
+  }, []);
 
   return (
     <>
@@ -374,7 +398,33 @@ const page = () => {
           )}
         </div>
         <div className="w-[0%] h-screen bg-[#FAEDC7] lg:w-[25%] ">
-          
+          <div className="text-sm h-[10%]">Suggestions</div>
+          <div className="h-[90%] overflow-y-auto z-20">
+            {suggestions.map((suggestion, index) => (
+              <div
+                className="flex justify-items-start pb-2 ml-3 mt-3"
+                key={index}
+              >
+                <Image
+                  alt="avatarImage"
+                  src={Avatar}
+                  width={75}
+                  height={75}
+                  className="rounded-full"
+                />
+                <div
+                  className="flex flex-col ml-4"
+                  onClick={(suggestion) => {
+                    handleSuggestion(suggestion);
+                  }}
+                >
+                  <div className="text-lg">{suggestion.username}</div>
+                  {/* <div className="text-sm">{userEmail}</div> */}
+                  {/* <div className="text-sm text-grey">My Account</div> */}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </>
@@ -382,3 +432,5 @@ const page = () => {
 };
 
 export default page;
+
+//create handle Suggestion function
