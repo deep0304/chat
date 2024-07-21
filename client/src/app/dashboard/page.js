@@ -9,10 +9,12 @@ const page = () => {
   const [user, setUser] = useState(null || "");
   const [recieverUserData, setRecieverUserData] = useState("");
   const [message, setMessage] = useState("");
+  const [type, setType] = useState("");
   const username = user.username;
   const userEmail = user.email;
   const userId = user.id;
   const [conversations, setConversations] = useState([]);
+  const [suggestedUser, setSuggestedUser] = useState({});
   useEffect(() => {
     const userDetails = JSON.parse(localStorage.getItem("user:details"));
     setUser(userDetails);
@@ -84,6 +86,7 @@ const page = () => {
         const responsedData = await requiredChats.json();
         setChats(responsedData.allMessages);
         console.log(responsedData.allMessages);
+        setType("reciever");
         setRecieverUserData(responsedData.recieverUserForFrontend);
       } catch (error) {
         console.log("error of the loadchat function: ", error);
@@ -94,7 +97,7 @@ const page = () => {
   const handleMessage = async () => {
     try {
       console.log(user.id);
-      console.log(recieverUserData.id);
+      // console.log(recieverUserData.id);
       console.log(message);
       const response = await fetch("http://localhost:3001/api/sendMessage", {
         method: "POST",
@@ -126,9 +129,7 @@ const page = () => {
       console.log("Error while sending the chat", error);
     }
   };
-  //---------------------------------------------------------------------------------------------------------------------------------------------
-  //create handle Suggestion here
-  //-------------------------------------------------------------------------------------------------------------
+
   const [suggestions, setSuggestions] = useState([]);
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -150,6 +151,15 @@ const page = () => {
     };
     fetchSuggestions();
   }, []);
+  //---------------------------------------------------------------------------------------------------------------------------------------------
+  //create handle Suggestion here
+  //-------------------------------------------------------------------------------------------------------------
+  const handleSuggestion = (suggestion) => {
+    setSuggestedUser(suggestion);
+    console.log("suggestion is : ", suggestion);
+    setType("suggestedUser");
+    setChats({});
+  };
 
   return (
     <>
@@ -245,9 +255,13 @@ const page = () => {
                   />
                   <div className="flex items-center mr-auto ">
                     <div className="ml-4 text-semibold">
-                      {recieverUserData
-                        ? recieverUserData.username
-                        : "Chat With Friends"}
+                      {type === "reciever"
+                        ? recieverUserData
+                          ? recieverUserData.username
+                          : "Chat With Friends"
+                        : type === "suggestedUser"
+                        ? suggestedUser.username
+                        : "Chat with Friends"}
                     </div>
                     <div className="text-xs indent-3 text-sky-700 mr-auto">
                       Online
@@ -294,30 +308,34 @@ const page = () => {
             </div>
           </div>
           <div className="bg-yellow-200 h-[70%]  overflow-y-auto">
-            {chats.length > 0 ? (
-              chats.map((chat, index) => (
-                <div key={index}>
-                  {chat.idType === "sender" ? (
-                    <div>
-                      {/* <div>{chat.username}</div> */}
-                      <SentMessage
-                        message={chat.message}
-                        className={"text-cyan-200"}
-                      />
-                    </div>
-                  ) : chat.idType === "reciever" ? (
-                    <div>
-                      {/* <div>{chat.username}</div> */}
-                      <RecievedMessage
-                        message={chat.message}
-                        className={"text-red-200"}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              ))
+            {recieverUserData ? (
+              chats.length > 0 ? (
+                chats.map((chat, index) => (
+                  <div key={index}>
+                    {chat.idType === "sender" ? (
+                      <div>
+                        {/* <div>{chat.username}</div> */}
+                        <SentMessage
+                          message={chat.message}
+                          className={"text-cyan-200"}
+                        />
+                      </div>
+                    ) : chat.idType === "reciever" ? (
+                      <div>
+                        {/* <div>{chat.username}</div> */}
+                        <RecievedMessage
+                          message={chat.message}
+                          className={"text-red-200"}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                ))
+              ) : (
+                <div>Chat not started yet , start chatting </div>
+              )
             ) : (
-              <div>Chat not started yet , start chatting </div>
+              "Start Chat"
             )}
           </div>
           {recieverUserData ? (
@@ -404,6 +422,9 @@ const page = () => {
               <div
                 className="flex justify-items-start pb-2 ml-3 mt-3"
                 key={index}
+                onClick={() => {
+                  handleSuggestion(suggestion);
+                }}
               >
                 <Image
                   alt="avatarImage"
@@ -412,12 +433,7 @@ const page = () => {
                   height={75}
                   className="rounded-full"
                 />
-                <div
-                  className="flex flex-col ml-4"
-                  onClick={(suggestion) => {
-                    handleSuggestion(suggestion);
-                  }}
-                >
+                <div className="flex flex-col ml-4">
                   <div className="text-lg">{suggestion.username}</div>
                   {/* <div className="text-sm">{userEmail}</div> */}
                   {/* <div className="text-sm text-grey">My Account</div> */}
