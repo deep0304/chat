@@ -15,7 +15,9 @@ const Form = ({ signUp = true }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const res = await fetch(
-      `http://localhost:3001/api/${signUp ? "register" : "login"}`,
+      `http://mychatbackend.iomghost.publicvm.com:3001/api/${
+        signUp ? "register" : "login"
+      }`,
 
       {
         method: "POST",

@@ -33,7 +33,7 @@ const page = () => {
     const fetchMyApi = async () => {
       try {
         const response = await fetch(
-          `http://localhost:3001/api/get/conversations/${loggedUserId}`,
+          `http://mychatbackend.iomghost.publicvm.com:3001/api/get/conversations/${loggedUserId}`,
           {
             method: "GET",
             headers: {
@@ -71,7 +71,7 @@ const page = () => {
           conversationId + " " + senderId
         );
         const requiredChats = await fetch(
-          "http://localhost:3001/api/messages",
+          "http://mychatbackend.iomghost.publicvm.com:3001/api/messages",
           {
             method: "POST",
             body: JSON.stringify({ ConversationId: conversationId, senderId }),
@@ -99,15 +99,18 @@ const page = () => {
       console.log(user.id);
       // console.log(recieverUserData.id);
       console.log(message);
-      const response = await fetch("http://localhost:3001/api/sendMessage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          senderId: user.id,
-          recieverId: recieverUserData.id,
-          message: message,
-        }),
-      });
+      const response = await fetch(
+        "http://mychatbackend.iomghost.publicvm.com:3001/api/sendMessage",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            senderId: user.id,
+            recieverId: recieverUserData.id,
+            message: message,
+          }),
+        }
+      );
       console.log();
       console.log(response);
       const responseData = await response.json();
@@ -134,10 +137,13 @@ const page = () => {
   useEffect(() => {
     const fetchSuggestions = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/suggestions", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+        const response = await fetch(
+          "http://mychatbackend.iomghost.publicvm.com:3001/api/suggestions",
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
