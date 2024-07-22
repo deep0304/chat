@@ -4,33 +4,33 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [create-next-
 
 1. Clone the repository:
 
-   sh
+   ```sh
    git clone https://github.com/deep0304/chat.git
-   
+   ```
 
 2. Navigate to the project directory:
 
-   sh
+   ```sh
    cd chat
-   
+   ```
 
 ## Getting Started
 
 1. Run Server:
 
-   sh
+   ```sh
    cd server
-
+   
    npm i
 
    npm run dev
-   
+   ```
 
 - Server starts running on [http://localhost:3001](http://localhost:3001).
 
 2. Run Client:
 
-   sh
+   ```sh
    cd ..
 
    cd client
@@ -38,7 +38,7 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [create-next-
    npm i
 
    npm run dev
-   
+   ```
 
 - Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
