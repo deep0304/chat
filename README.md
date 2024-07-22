@@ -24,3 +24,21 @@ Follow these instructions to get a copy of the project up and running on your lo
 
    ```sh
    git clone https://github.com/your-username/your-repo-name.git
+
+   ```
+
+2. **Go in the client Folder:**
+   ```sh
+   cd client
+
+   ```
+3. **Run the npm install:**
+   ```sh
+   npm install
+
+   ```
+4. **Run the cmd:**
+   ```sh
+   npm run dev
+
+   ```
